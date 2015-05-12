@@ -1,11 +1,12 @@
 //security.go
-//@auther huhaoran<huhaoran@domob.cn>
 package security
 
 import (
+	"bytes"
 	"crypto/aes"
 )
 
+// 加密
 func encrypt(plaintext []byte, key string) []byte {
 	cipher, err := aes.NewCipher([]byte(key[:aes.BlockSize]))
 	if err != nil {
@@ -19,6 +20,7 @@ func encrypt(plaintext []byte, key string) []byte {
 	ciphertext := make([]byte, 0)
 	text := make([]byte, 16)
 	for len(plaintext) > 0 {
+		// 每次运算一个block
 		cipher.Encrypt(text, plaintext)
 		plaintext = plaintext[aes.BlockSize:]
 		ciphertext = append(ciphertext, text...)
@@ -26,6 +28,7 @@ func encrypt(plaintext []byte, key string) []byte {
 	return ciphertext
 }
 
+// 解密
 func decrypt(ciphertext []byte, key string) []byte {
 	cipher, err := aes.NewCipher([]byte(key[:aes.BlockSize]))
 	if err != nil {
@@ -46,16 +49,14 @@ func decrypt(ciphertext []byte, key string) []byte {
 	return plaintext
 }
 
+// Padding补全
 func PKCS7Pad(data []byte) []byte {
-	padLength := aes.BlockSize - len(data)%aes.BlockSize
-	for i:=0;i<padLength;i++ {
-		data = append(data, byte(padLength))
-	}
-	return data
+	padding := aes.BlockSize - len(data) % aes.BlockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, padtext...)
 }
 
 func PKCS7UPad(data []byte) []byte {
 	padLength := int(data[len(data)-1])
 	return data[:len(data)-padLength]
 }
-
